@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Live Attendance</title>
+    <!-- Live Mobile QR Scanner Library -->
+    <script src="https://unpkg.com"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; background: #f8f9fa; color: #333; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 20px auto; }
+        input { width: 85%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+        .btn { background: #28a745; color: white; padding: 14px 28px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; display: none; width: 90%; margin-top: 15px; }
+        #status { margin: 20px; font-weight: bold; padding: 12px; border-radius: 6px; font-size: 14px; }
+        #reader { width: 100%; max-width: 320px; margin: 20px auto; border-radius: 8px; overflow: hidden; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2 style="color: #007bff; margin-bottom: 5px;">Easy Track App</h2>
+        <p style="font-size: 13px; color: #666; margin-top: 0;">Mobile Attendance System</p>
+        
+        <div id="status" style="background:#fff3cd; color:#856404;">📍 Fetching GPS Location... Kindly wait.</div>
+        
+        <!-- Input Form Fields -->
+        <div id="form-fields">
+            <input type="text" id="staffName" placeholder="Staff Name" required><br>
+            <input type="tel" id="mobileNo" placeholder="Mobile Number" required><br>
+        </div>
+
+        <!-- Attendance Trigger Button -->
+        <button id="scanBtn" class="btn" onclick="startQRScanner()">Scan Office QR Code</button>
+        <div id="reader"></div>
+    </div>
+
+    <script>
+        // ==================== CONFIGURATION (Unga Details) ====================
+        const OFFICE_LAT = 13.0827; // 1. Google Maps-il edutha unga office Latitude-ai ingae podavendum
+        const OFFICE_LNG = 80.2707; // 2. Google Maps-il edutha unga office Longitude-ai ingae podavendum
+        const RADIUS_KM = 0.05;     // 50 Meters Lock Boundary
+        
+        // 3. Mela neenga copy seitha Google Web App URL link-ai kele ulla double quotes-kulla paste seiyungal:
+        const APP_URL = "PASTE_YOUR_GOOGLE_WEB_APP_URL_HERE"; 
+        // =======================================================================
+
+        let currentCoordinates = "";
+
+        // Track GPS On-Load
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(pos => {
+                let lat = pos.coords.latitude;
+                let lng = pos.coords.longitude;
+                currentCoordinates = lat + "," + lng;
+
+                let dist = calculateDistance(lat, lng, OFFICE_LAT, OFFICE_LNG);
+
+                if (dist <= RADIUS_KM) {
+                    updateStatus("📍 Location Verified! Neenga office ulla thaan irukinga.", "#d4edda", "#155724");
+                    document.getElementById("scanBtn").style.display = "inline-block";
+                } else {
+                    updateStatus("❌ Error: Neenga office-il illai! Attendance poda mudiyaathu.", "#f8d7da", "#721c24");
+                }
+            }, err => {
+                updateStatus("⚠️ Location access denied. Please turn ON Mobile GPS!", "#fff3cd", "#856404");
+            });
+        } else {
+            updateStatus("⚠️ Your browser does not support GPS.", "#f8d7da", "#721c24");
+        }
+
+        function startQRScanner() {
+            let name = document.getElementById("staffName").value.trim();
+            let mobile = document.getElementById("mobileNo").value.trim();
+            if(!name || !mobile) { alert("Peyar matrum Mobile number-ai type seiyungal!"); return; }
+
+            document.getElementById("reader").style.display = "block";
+            const scanner = new Html5Qrcode("reader");
+            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
+                (text) => {
+                    scanner.stop();
+                    document.getElementById("reader").style.display = "none";
+                    pushToGoogleSheet(name, mobile, text);
+                },
+                (errorMessage) => { /* Scanning... */ }
+            ).catch(err => { alert("Camera Permission Required!"); });
+        }
+
+        function pushToGoogleSheet(name, mobile, qr) {
+            updateStatus("Syncing data with Laptop Excel...", "#e2e3e5", "#383d41");
+            let today = new Date();
+
+            let payload = {
+                staffName: name,
+                mobileNo: mobile,
+                date: today.toLocaleDateString('en-GB'), // DD/MM/YYYY Formaat
+                time: today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }), // HH:MM AM/PM
+                qrCode: qr,
+                location: currentCoordinates
+            };
+
+            fetch(APP_URL, {
+                method: "POST",
+                mode: "no-cors", // Bypasses CORS browser errors
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            }).then(() => {
+                updateStatus("✅ Attendance Marked Successfully!", "#d4edda", "#155724");
+                document.getElementById("form-fields").style.display = "none";
+                document.getElementById("scanBtn").style.display = "none";
+            }).catch(e => {
+                updateStatus("⚠️ Sync failed. Check network connection.", "#f8d7da", "#721c24");
+            });
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            let R = 6371; // Earth radius in KM
+            let dLat = (lat2 - lat1) * Math.PI / 180;
+            let dLon = (lon2 - lon1) * Math.PI / 180;
+            let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+        }
+
+        function updateStatus(txt, bg, color) {
+            let s = document.getElementById("status");
+            s.innerHTML = txt; s.style.background = bg; s.style.color = color;
+        }
+    </script>
+</body>
+</html>
