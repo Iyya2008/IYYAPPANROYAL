@@ -21,7 +21,7 @@
         <h2 style="color: #007bff; margin-bottom: 5px;">Easy Track App</h2>
         <p style="font-size: 13px; color: #666; margin-top: 0;">Mobile Attendance System</p>
         
-        <div id="status" style="background:#fff3cd; color:#856404;">📍 Fetching GPS Location... Kindly wait.</div>
+        <div id="status" style="background:#fff3cd; color:#856404;">🌐 Verifying Office Network Connection...</div>
         
         <!-- Input Form Fields -->
         <div id="form-fields">
@@ -36,35 +36,24 @@
 
     <script>
         // ==================== CONFIGURATION (Unga Details) ====================
-        const OFFICE_LAT = 11.6031403; // Unga Office Latitude
-        const OFFICE_LNG = 79.0342840; // Unga Office Longitude
-        const RADIUS_KM = 0.5;         // 500 Meters Safe Boundary Lock
+        const OFFICE_IP = "157.51.198.94"; // Deployed Wife Mobile Hotspot Public IP
         const APP_URL = "https://google.com"; 
         // =======================================================================
 
-        let currentCoordinates = "";
-
-        // Track GPS On-Load with 500m Safety Limit
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(pos => {
-                let lat = pos.coords.latitude;
-                let lng = pos.coords.longitude;
-                currentCoordinates = lat + "," + lng;
-
-                let dist = calculateDistance(lat, lng, OFFICE_LAT, OFFICE_LNG);
-
-                if (dist <= RADIUS_KM) {
-                    updateStatus("📍 Location Verified! Welcome to Office.", "#d4edda", "#155724");
-                    document.getElementById("scanBtn").style.display = "inline-block";
-                } else {
-                    updateStatus("❌ Error: Neenga office-il illai! Veetila irundhu attendance poda mudiyaathu.", "#f8d7da", "#721c24");
-                }
-            }, err => {
-                updateStatus("⚠️ Location access denied. Please turn ON Mobile GPS!", "#fff3cd", "#856404");
-            });
-        } else {
-            updateStatus("⚠️ Your browser does not support GPS.", "#f8d7da", "#721c24");
-        }
+        // Auto verify network IP on load
+        fetch('https://ipify.org')
+        .then(response => response.json())
+        .then(data => {
+            let userIP = data.ip;
+            if (userIP === OFFICE_IP) {
+                updateStatus("✅ Office Wi-Fi Connected! Network Verified.", "#d4edda", "#155724");
+                document.getElementById("scanBtn").style.display = "inline-block";
+            } else {
+                updateStatus("❌ Error: Neenga Office Wi-Fi networks-il illai! Veetila irundhu attendance poda mudiyaathu.", "#f8d7da", "#721c24");
+            }
+        }).catch(err => {
+            updateStatus("⚠️ Network verification failed. Check your internet connection.", "#fff3cd", "#856404");
+        });
 
         function startQRScanner() {
             let name = document.getElementById("staffName").value.trim();
@@ -93,7 +82,7 @@
                 date: today.toLocaleDateString('en-GB'),
                 time: today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
                 qrCode: qr,
-                location: currentCoordinates
+                location: "Wife Mobile Hotspot Network"
             };
 
             fetch(APP_URL, {
@@ -105,17 +94,7 @@
                 updateStatus("✅ Attendance Marked Successfully!", "#d4edda", "#155724");
                 document.getElementById("form-fields").style.display = "none";
                 document.getElementById("scanBtn").style.display = "none";
-            }).catch(e => {
-                updateStatus("⚠️ Sync failed. Check network connection.", "#f8d7da", "#721c24");
             });
-        }
-
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            let R = 6371; // Earth radius in KM
-            let dLat = (lat2 - lat1) * Math.PI / 180;
-            let dLon = (lon2 - lon1) * Math.PI / 180;
-            let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
 
         function updateStatus(txt, bg, color) {
