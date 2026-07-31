@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company Live Attendance</title>
+    <title>Company Attendance System</title>
     <!-- Live Mobile QR Scanner Library -->
-    <script src="https://unpkg.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; background: #f8f9fa; color: #333; }
         .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); max-width: 400px; margin: 20px auto; }
         input { width: 85%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
-        .btn { background: #28a745; color: white; padding: 14px 28px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; display: none; width: 90%; margin-top: 15px; }
-        #status { margin: 20px; font-weight: bold; padding: 12px; border-radius: 6px; font-size: 14px; }
+        .btn { background: #28a745; color: white; padding: 14px 28px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; display: inline-block; width: 90%; margin-top: 15px; }
+        #status { margin: 20px; font-weight: bold; padding: 12px; border-radius: 6px; font-size: 14px; display: none; }
         #reader { width: 100%; max-width: 320px; margin: 20px auto; border-radius: 8px; overflow: hidden; display: none; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2 style="color: #007bff; margin-bottom: 5px;">IYYAPPAN</h2>
+        <h2 style="color: #007bff; margin-bottom: 5px;">Easy Track App</h2>
         <p style="font-size: 13px; color: #666; margin-top: 0;">Mobile Attendance System</p>
         
-        <div id="status" style="background:#fff3cd; color:#856404;">🌐 Verifying Office Network Connection...</div>
+        <div id="status"></div>
         
         <!-- Input Form Fields -->
         <div id="form-fields">
@@ -35,71 +35,76 @@
     </div>
 
     <script>
-        // ==================== CONFIGURATION (Unga Details) ====================
-        const OFFICE_IP = "157.51.198.94"; // Deployed Wife Mobile Hotspot Public IP
-        const APP_URL = "https://google.com"; 
-        // =======================================================================
-
-        // Auto verify network IP on load
-        fetch('https://ipify.org')
-        .then(response => response.json())
-        .then(data => {
-            let userIP = data.ip;
-            if (userIP === OFFICE_IP) {
-                updateStatus("✅ Office Wi-Fi Connected! Network Verified.", "#d4edda", "#155724");
-                document.getElementById("scanBtn").style.display = "inline-block";
-            } else {
-                updateStatus("❌ Error: Neenga Office Wi-Fi networks-il illai! Veetila irundhu attendance poda mudiyaathu.", "#f8d7da", "#721c24");
-            }
-        }).catch(err => {
-            updateStatus("⚠️ no wifi.", "#fff3cd", "#856404");
-        });
+        // ==================== CONFIGURATION ====================
+        // Google Web App URL-ai kele ulla double quotes-kulla paste seiyungal:
+        const APP_URL = "https://script.google.com/macros/s/AKfycbwyi-8SF7I0h3ppBt1F6RVC9Sp0rdkSlnpc82Ojkw3J36UUOmAAzZB7yG2lYKfCxGEe5g/exec"; 
+        // =======================================================
 
         function startQRScanner() {
             let name = document.getElementById("staffName").value.trim();
             let mobile = document.getElementById("mobileNo").value.trim();
-            if(!name || !mobile) { alert("Peyar matrum Mobile number-ai type seiyungal!"); return; }
+            
+            if(!name || !mobile) { 
+                alert("தயவுசெய்து பெயர் மற்றும் மொபைல் எண்ணை உள்ளிடவும்!"); 
+                return; 
+            }
 
+            // Form-ஐ மறைத்துவிட்டு ஸ்கேனரை காட்டுகிறோம்
+            document.getElementById("form-fields").style.display = "none";
+            document.getElementById("scanBtn").style.display = "none";
             document.getElementById("reader").style.display = "block";
+
             const scanner = new Html5Qrcode("reader");
-            scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
+            scanner.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: 250 },
                 (text) => {
-                    scanner.stop();
-                    document.getElementById("reader").style.display = "none";
-                    pushToGoogleSheet(name, mobile, text);
+                    scanner.stop().then(() => {
+                        document.getElementById("reader").style.display = "none";
+                        pushToGoogleSheet(name, mobile, text);
+                    }).catch(err => {
+                        console.log("Failed to stop scanner.");
+                    });
                 },
                 (errorMessage) => { /* Scanning... */ }
-            ).catch(err => { alert("Camera Permission Required!"); });
+            ).catch(err => { 
+                alert("கமரா அனுமதி (Camera Permission) தேவை!"); 
+                document.getElementById("form-fields").style.display = "block";
+                document.getElementById("scanBtn").style.display = "inline-block";
+                document.getElementById("reader").style.display = "none";
+            });
         }
 
         function pushToGoogleSheet(name, mobile, qr) {
-            updateStatus("Syncing data with Laptop Excel...", "#e2e3e5", "#383d41");
+            updateStatus("தகவல்கள் பதிவு செய்யப்படுகிறது... சற்று காத்தizhkavum.", "#e2e3e5", "#383d41", true);
             let today = new Date();
 
             let payload = {
                 staffName: name,
                 mobileNo: mobile,
-                date: today.toLocaleDateString('en-GB'),
-                time: today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
-                qrCode: qr,
-                location: "Wife Mobile Hotspot Network"
+                date: today.toLocaleDateString('en-GB'), // DD/MM/YYYY Format
+                time: today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }), // HH:MM AM/PM
+                qrCode: qr
             };
 
             fetch(APP_URL, {
                 method: "POST",
-                mode: "no-cors", 
+                mode: "no-cors", // Bypasses CORS browser errors
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             }).then(() => {
-                updateStatus("✅ Attendance Marked Successfully!", "#d4edda", "#155724");
-                document.getElementById("form-fields").style.display = "none";
-                document.getElementById("scanBtn").style.display = "none";
+                updateStatus("✅ Attendance Marked Successfully! (வருகை பதிவு செய்யப்பட்டது)", "#d4edda", "#155724", true);
+            }).catch(e => {
+                updateStatus("⚠️ Sync failed. Check network connection.", "#f8d7da", "#721c24", true);
             });
         }
 
-        function updateStatus(txt, bg, color) {
+        function updateStatus(txt, bg, color, show) {
             let s = document.getElementById("status");
-            s.innerHTML = txt; s.style.background = bg; s.style.color = color;
+            s.innerHTML = txt; 
+            s.style.background = bg; 
+            s.style.color = color;
+            s.style.display = show ? "block" : "none";
         }
     </script>
 </body>
