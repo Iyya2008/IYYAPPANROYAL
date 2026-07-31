@@ -36,17 +36,15 @@
 
     <script>
         // ==================== CONFIGURATION (Unga Details) ====================
-        const OFFICE_LAT = 11.6031403; // 1. Google Maps-il edutha unga office Latitude-ai ingae podavendum
-        const OFFICE_LNG = 79.0342840; // 2. Google Maps-il edutha unga office Longitude-ai ingae podavendum
-        const RADIUS_KM = 0.05;     // 50 Meters Lock Boundary
-        
-        // 3. Mela neenga copy seitha Google Web App URL link-ai kele ulla double quotes-kulla paste seiyungal:
-        const APP_URL = "https://script.google.com/macros/s/AKfycbwyi-8SF7I0h3ppBt1F6RVC9Sp0rdkSlnpc82Ojkw3J36UUOmAAzZB7yG2lYKfCxGEe5g/exec"; 
+        const OFFICE_LAT = 11.6031403; // Unga Office Latitude
+        const OFFICE_LNG = 79.0342840; // Unga Office Longitude
+        const RADIUS_KM = 0.5;         // 500 Meters Safe Boundary Lock
+        const APP_URL = "https://google.com"; 
         // =======================================================================
 
         let currentCoordinates = "";
 
-        // Track GPS On-Load
+        // Track GPS On-Load with 500m Safety Limit
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(pos => {
                 let lat = pos.coords.latitude;
@@ -56,10 +54,10 @@
                 let dist = calculateDistance(lat, lng, OFFICE_LAT, OFFICE_LNG);
 
                 if (dist <= RADIUS_KM) {
-                    updateStatus("📍 Location Verified! Neenga office ulla thaan irukinga.", "#d4edda", "#155724");
+                    updateStatus("📍 Location Verified! Welcome to Office.", "#d4edda", "#155724");
                     document.getElementById("scanBtn").style.display = "inline-block";
                 } else {
-                    updateStatus("❌ Error: Neenga office-il illai! Attendance poda mudiyaathu.", "#f8d7da", "#721c24");
+                    updateStatus("❌ Error: Neenga office-il illai! Veetila irundhu attendance poda mudiyaathu.", "#f8d7da", "#721c24");
                 }
             }, err => {
                 updateStatus("⚠️ Location access denied. Please turn ON Mobile GPS!", "#fff3cd", "#856404");
@@ -92,15 +90,15 @@
             let payload = {
                 staffName: name,
                 mobileNo: mobile,
-                date: today.toLocaleDateString('en-GB'), // DD/MM/YYYY Formaat
-                time: today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }), // HH:MM AM/PM
+                date: today.toLocaleDateString('en-GB'),
+                time: today.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
                 qrCode: qr,
                 location: currentCoordinates
             };
 
             fetch(APP_URL, {
                 method: "POST",
-                mode: "no-cors", // Bypasses CORS browser errors
+                mode: "no-cors", 
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             }).then(() => {
