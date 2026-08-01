@@ -1,109 +1,4 @@
-<!DOCTYPE html>
-<html lang="ta">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dhanlaxmi Motors Attendance</title>
-    <!-- Live Mobile QR Scanner Library -->
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; background: #f4f6f9; color: #333; }
-        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 6px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 20px auto; }
-        input { width: 85%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; }
-        .btn { background: #28a745; color: white; padding: 14px 28px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: inline-block; width: 90%; margin-top: 15px; }
-        #status { margin: 15px auto; font-weight: bold; padding: 15px; border-radius: 10px; font-size: 15px; display: none; }
-        #reader { width: 100%; max-width: 320px; margin: 20px auto; border-radius: 8px; overflow: hidden; display: none; }
-
-        /* GPay Style Green Tick Animation */
-        .success-checkmark { display: none; margin: 10px auto 20px auto; width: 80px; height: 80px; }
-        .check-icon {
-            width: 80px; height: 80px; border-radius: 50%; display: block;
-            stroke-width: 3; stroke: #fff; stroke-miterlimit: 10;
-            box-shadow: inset 0px 0px 0px #28a745;
-            animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
-        }
-        .check-icon .circle {
-            stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 3;
-            stroke-miterlimit: 10; stroke: #28a745; fill: none;
-            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-        }
-        .check-icon .check {
-            transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48;
-            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
-        }
-        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
-        @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
-        @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 40px #28a745; } }
-    </style>
-</head>
-<body>
-
-    <div class="card">
-        <!-- கம்பனி பெயர் மாற்றம் -->
-        <h2 style="color: #0056b3; margin-bottom: 5px; text-transform: uppercase; font-weight: 800;">DHANLAXMI MOTORS</h2>
-        <p style="font-size: 13px; color: #666; margin-top: 0;">Mobile Attendance System</p>
-        
-        <!-- GPay Style Tick Animation -->
-        <div class="success-checkmark" id="checkmark">
-            <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-                <circle class="circle" cx="26" cy="26" r="25" fill="none"/>
-                <path class="check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
-            </svg>
-        </div>
-
-        <div id="status"></div>
-        
-        <!-- Input Form Fields -->
-        <div id="form-fields">
-            <input type="text" id="staffName" placeholder="Staff Name" required><br>
-            <input type="tel" id="mobileNo" placeholder="Mobile Number" required><br>
-        </div>
-
-        <!-- Attendance Trigger Button -->
-        <button id="scanBtn" class="btn" onclick="startQRScanner()">Scan Office QR Code</button>
-        <div id="reader"></div>
-    </div>
-
-    <script>
-        // ==================== CONFIGURATION ====================
-        const APP_URL = "https://script.google.com/macros/s/AKfycbzoAFfX0CaQqGGVXmv-hd4VDZR3lZ9rRautX_sr9pJ0WByYk1F-RmvFJCfo1oaQ05qs3A/exec"; 
-        // =======================================================
-
-        function startQRScanner() {
-            let name = document.getElementById("staffName").value.trim();
-            let mobile = document.getElementById("mobileNo").value.trim();
-            
-            if(!name || !mobile) { 
-                alert("தயவுசெய்து பெயர் மற்றும் மொபைல் எண்ணை உள்ளிடவும்!"); 
-                return; 
-            }
-
-            document.getElementById("form-fields").style.display = "none";
-            document.getElementById("scanBtn").style.display = "none";
-            document.getElementById("reader").style.display = "block";
-
-            const scanner = new Html5Qrcode("reader");
-            scanner.start(
-                { facingMode: "environment" }, 
-                { fps: 10, qrbox: 250 },
-                (text) => {
-                    scanner.stop().then(() => {
-                        document.getElementById("reader").style.display = "none";
-                        pushToGoogleSheet(name, mobile, text);
-                    }).catch(err => {
-                        console.log("Failed to stop scanner.");
-                    });
-                },
-                (errorMessage) => { /* Scanning... */ }
-            ).catch(err => { 
-                alert("கமரா அனுமதி (Camera Permission) தேவை!"); 
-                document.getElementById("form-fields").style.display = "block";
-                document.getElementById("scanBtn").style.display = "inline-block";
-                document.getElementById("reader").style.display = "none";
-            });
-        }
-
-        function pushToGoogleSheet(name, mobile, qr) {
+function pushToGoogleSheet(name, mobile, qr) {
             updateStatus("தகவல்கள் பதிவு செய்யப்படுகிறது...", "#e2e3e5", "#383d41", true);
             let today = new Date();
 
@@ -121,44 +16,55 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             }).then(() => {
-                // 1. GPay ரைட் டிக் காட்டுகிறோம்
+                // 1. GPay ரைட் டிக்
                 document.getElementById("checkmark").style.display = "block";
 
-                // 2. தமிழ் வாய்ஸ் பேச வைக்கும் ஃபங்ஷன்
-                speakTamil(name + " உங்கள் வருகை பதிவு செய்யப்பட்டது, நன்றி!");
+                // 2. தெளிவான பெண் குரல் உரை
+                let textMessage = `${name}, உங்கள் வருகை, வருகை பதிவேட்டில் பதிவு செய்யப்பட்டது. நன்றி!`;
+                speakTamil(textMessage);
 
-                // 3. மெசேஜ் காட்டுகிறோம்
+                // 3. மெசேஜ் டிஸ்ப்ளே
                 updateStatus("வருகை பதிவு செய்யப்பட்டது!", "#d4edda", "#155724", true);
 
-                // 4. 4 வினாடியில் தானாகவே Refresh ஆகும்
+                // 4. வாய்ஸ் பேசி முடிக்க நேரம் கொடுத்து 5 வினாடியில் Auto-Refresh
                 setTimeout(() => {
                     location.reload();
-                }, 4000);
+                }, 5000);
 
             }).catch(e => {
                 updateStatus("⚠️ Sync failed. Check network connection.", "#f8d7da", "#721c24", true);
             });
         }
 
-        // தமிழ் வாய்ஸ் பேசும் ஃபங்ஷன் (Text-to-Speech)
+        // தெளிவான பெண் குரல் (Human-like Female Voice) ஃபங்ஷன்
         function speakTamil(textToSpeak) {
             if ('speechSynthesis' in window) {
+                // பழைய பேச்சை நிறுத்துகிறோம்
+                window.speechSynthesis.cancel();
+
                 let speech = new SpeechSynthesisUtterance();
                 speech.text = textToSpeak;
-                speech.lang = 'ta-IN'; // தமிழ் குரல்
-                speech.rate = 0.9;     // இயல்பான வேகம்
-                speech.pitch = 1;
+                speech.lang = 'ta-IN'; // தமிழ் மொழி
+                speech.rate = 0.85;    // நிதானமான இயற்கை வேகம் (Human Speech)
+                speech.pitch = 1.2;    // மென்மையான பெண் குரலுக்கான Pitch
+
+                // கிடைக்கக்கூடிய Voice-களில் Female/Google Voice-ஐ தேடி எடுக்கிறோம்
+                let voices = window.speechSynthesis.getVoices();
+                let femaleTamilVoice = voices.find(voice => 
+                    voice.lang.includes('ta') && (voice.name.includes('Google') || voice.name.includes('Female') || voice.name.includes('Natural'))
+                ) || voices.find(voice => voice.lang.includes('ta'));
+
+                if (femaleTamilVoice) {
+                    speech.voice = femaleTamilVoice;
+                }
+
                 window.speechSynthesis.speak(speech);
             }
         }
 
-        function updateStatus(txt, bg, color, show) {
-            let s = document.getElementById("status");
-            s.innerHTML = txt; 
-            s.style.background = bg; 
-            s.style.color = color;
-            s.style.display = show ? "block" : "none";
+        // பிரவுசர் குரல்களை லோட் செய்ய
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => {
+                window.speechSynthesis.getVoices();
+            };
         }
-    </script>
-</body>
-</html>
