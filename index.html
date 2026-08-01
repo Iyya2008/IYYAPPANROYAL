@@ -10,23 +10,21 @@
         body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 15px; background: #f4f6f9; color: #333; }
         .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 6px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 10px auto; }
         
-        /* Header Logo Section */
         .shop-header { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .mechanic-logo { width: 45px; height: 45px; }
+        .mechanic-logo { width: 45px; height: 45px; cursor: pointer; transition: transform 0.2s; }
+        .mechanic-logo:active { transform: scale(0.9); }
         .shop-header h2 { color: #0056b3; font-size: 18px; margin: 0; text-transform: uppercase; font-weight: 800; }
 
         input { width: 85%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; }
         .btn { background: #28a745; color: white; padding: 14px 28px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 90%; margin-top: 10px; }
         .btn-blue { background: #007bff; }
         
-        #status { margin: 15px auto; font-weight: bold; padding: 12px; border-radius: 10px; font-size: 14px; display: none; }
+        #status { margin: 15px auto; font-weight: bold; padding: 12px; border-radius: 10px; font-size: 14px; display: none; line-height: 1.5; }
         #reader { width: 100%; max-width: 320px; margin: 15px auto; border-radius: 8px; overflow: hidden; display: none; }
 
-        /* Login Verified Badge */
         .login-verified-badge { display: none; background: #e7f1ff; color: #0c5460; padding: 8px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 15px; }
         .blue-tick { color: #0d6efd; font-size: 16px; margin-left: 5px; }
 
-        /* GPay Style Green Tick Animation */
         .success-checkmark { display: none; margin: 10px auto 20px auto; width: 80px; height: 80px; }
         .check-icon {
             width: 80px; height: 80px; border-radius: 50%; display: block;
@@ -51,28 +49,27 @@
 <body>
 
     <div class="card">
-        <!-- Mechanic Logo & Shop Name -->
+        <!-- Mechanic Logo with Hidden Logout Click -->
         <div class="shop-header">
-            <img src="https://cdn-icons-png.flaticon.com/512/1995/1995429.png" class="mechanic-logo" alt="Mechanic Logo">
+            <img src="https://cdn-icons-png.flaticon.com/512/1995/1995429.png" class="mechanic-logo" id="logoLogout" onclick="hiddenLogout()" title="Click to Logout" alt="Mechanic Logo">
             <h2>DHANLAXMI MOTORS</h2>
         </div>
 
-        <!-- Permanent Login Verified Badge (Blue Tick) -->
         <div id="verifiedBadge" class="login-verified-badge">
-            📱 Device Registered <span class="blue-tick">✔</span>
+            📱 User Logged In <span class="blue-tick">✔</span>
         </div>
 
         <p style="font-size: 13px; color: #666; margin-top: 0;">Mobile Attendance System</p>
 
         <!-- 1. FIRST TIME OTP LOGIN SECTION -->
         <div id="otpSection">
-            <h3 style="font-size: 15px; color: #333;">One Time Registration</h3>
+            <h3 style="font-size: 15px; color: #333;">Staff Registration / Login</h3>
             <input type="tel" id="regMobile" placeholder="Enter Mobile Number" maxlength="10"><br>
             <button id="sendOtpBtn" class="btn btn-blue" onclick="sendOTP()">Send OTP</button>
             
             <div id="otpInputDiv" style="display:none; margin-top:10px;">
                 <input type="number" id="otpCode" placeholder="Enter 4-Digit OTP (1234)"><br>
-                <button class="btn btn-blue" onclick="verifyOTP()">Verify & Save Device</button>
+                <button class="btn btn-blue" onclick="verifyOTP()">Verify Login</button>
             </div>
         </div>
 
@@ -97,39 +94,55 @@
     </div>
 
     <script>
+        // ==================== CONFIGURATION ====================
         const APP_URL = "https://script.google.com/macros/s/AKfycbzoAFfX0CaQqGGVXmv-hd4VDZR3lZ9rRautX_sr9pJ0WByYk1F-RmvFJCfo1oaQO5qs3A/exec"; 
-        const COOLDOWN_HOURS = 10;
+        const COOLDOWN_HOURS = 1; // 1 மணி நேர லாக்
+        
+        // உங்களின் சரியான GPS லொகேஷன்
+        const OFFICE_LAT = 11.6031403; 
+        const OFFICE_LNG = 79.0342840;
+        const RADIUS_KM = 0.1; // 100 மீட்டர் எல்லை (0.1 KM)
+        // =======================================================
+
         let generatedOTP = null;
 
-        // Check if Already Logged in Permanently
         window.onload = function() {
             let savedMobile = localStorage.getItem("registered_mobile");
             if (savedMobile) {
                 document.getElementById("otpSection").style.display = "none";
                 document.getElementById("attendanceSection").style.display = "block";
                 document.getElementById("verifiedBadge").style.display = "block";
+                document.getElementById("mobileNo").value = savedMobile;
             }
         };
 
-        // Simulated OTP Sending
+        function hiddenLogout() {
+            let savedMobile = localStorage.getItem("registered_mobile");
+            if (savedMobile) {
+                if (confirm("வெளியேற (Logout) வேண்டுமா?")) {
+                    localStorage.removeItem("registered_mobile");
+                    alert("வெற்றிகரமாக Logout செய்யப்பட்டது!");
+                    location.reload();
+                }
+            }
+        }
+
         function sendOTP() {
             let mobile = document.getElementById("regMobile").value.trim();
             if(mobile.length !== 10) { alert("சரியான 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்!"); return; }
-            
-            generatedOTP = "1234"; // Demo OTP
+            generatedOTP = "1234";
             alert("OTP அனுப்பப்பட்டது! (Demo OTP: 1234)");
             document.getElementById("otpInputDiv").style.display = "block";
             document.getElementById("sendOtpBtn").style.display = "none";
         }
 
-        // Permanent Device Registration
         function verifyOTP() {
             let enteredOTP = document.getElementById("otpCode").value.trim();
             let mobile = document.getElementById("regMobile").value.trim();
 
             if (enteredOTP === generatedOTP) {
-                localStorage.setItem("registered_mobile", mobile); // Permanent Lock
-                alert("Login வெற்றிகரமாக முடிந்தது! இந்த சாதனத்தில் பதிவு செய்யப்பட்டது.");
+                localStorage.setItem("registered_mobile", mobile);
+                alert("Login வெற்றிகரமாக முடிந்தது!");
                 location.reload();
             } else {
                 alert("தவறான OTP! மீண்டும் முயற்சிக்கவும்.");
@@ -146,20 +159,19 @@
                 return; 
             }
 
-            // ===== CHECK: REGISTRATION MOBILE vs TYPED MOBILE =====
             if (mobile !== registeredMobile) {
                 let errorMsg = `${name}, நீங்கள் தவறான மொபைல் எண்ணை உள்ளிட்டுள்ளீர்கள்!`;
                 speakTamil(errorMsg);
                 updateStatus(`⚠️ ${name}, நீங்கள் தவறான மொபைல் எண்ணை உள்ளிட்டுள்ளீர்கள்!`, "#f8d7da", "#721c24", true);
-                return; // Stop Scanning
+                return; 
             }
 
-            // ===== 10 HOURS LOCK CHECK =====
+            // 1 HOUR LOCK CHECK
             let lastScanTime = localStorage.getItem("last_scan_" + mobile);
             let currentTime = new Date().getTime();
 
             if (lastScanTime) {
-                let hoursPassed = (currentTime - parseInt(lastScanTime)) / (1 *1 * 1);
+                let hoursPassed = (currentTime - parseInt(lastScanTime)) / (1000 * 60 * 60);
                 if (hoursPassed < COOLDOWN_HOURS) {
                     let alertMsg = `${name}, நீங்கள் ஏற்கனவே வருகைப் பதிவேட்டில் பதிவு செய்துவிட்டீர்கள்!`;
                     speakTamil(alertMsg);
@@ -168,8 +180,45 @@
                 }
             }
 
+            // ================= LIVE GPS DISTANCE CHECK =================
+            updateStatus("📍 GPS இருப்பிடம் சரிபார்க்கப்படுகிறது...", "#fff3cd", "#856404", true);
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    let userLat = pos.coords.latitude;
+                    let userLng = pos.coords.longitude;
+                    
+                    let distKm = calculateDistance(userLat, userLng, OFFICE_LAT, OFFICE_LNG);
+                    let distMeters = Math.round(distKm * 1000); // மீட்டராக மாற்றுகிறோம்
+
+                    if (distKm <= RADIUS_KM) {
+                        // 1. WELCOME TO OFFICE VOICE
+                        speakTamil("Welcome to office!");
+                        
+                        setTimeout(() => {
+                            openScanner(name, mobile);
+                        }, 1200);
+
+                    } else {
+                        // 2. WRONG LOCATION VOICE & LIVE METER DISPLAY
+                        let wrongVoice = "நீங்கள் தவறான இடத்தில் உள்ளீர்கள்! சரியான இடத்திற்கு செல்லவும்.";
+                        speakTamil(wrongVoice);
+
+                        updateStatus(`❌ நீங்கள் தவறான இடத்தில் உள்ளீர்கள்!<br>📍 ஆபீஸிற்கு செல்ல இன்னும் <b>${distMeters} Meters</b> தூரம் உள்ளது.`, "#f8d7da", "#721c24", true);
+                    }
+                }, err => {
+                    alert("தயவுசெய்து மொபைல் GPS (Location) ஆன் செய்யவும்!");
+                    updateStatus("⚠️ GPS Access Denied! Please turn ON Location.", "#f8d7da", "#721c24", true);
+                }, { enableHighAccuracy: true });
+            } else {
+                alert("உங்கள் போனில் GPS வசதி இல்லை!");
+            }
+        }
+
+        function openScanner(name, mobile) {
             document.getElementById("attendanceSection").style.display = "none";
             document.getElementById("reader").style.display = "block";
+            updateStatus("ஸ்கேன் செய்யவும்...", "#e2e3e5", "#383d41", true);
 
             const scanner = new Html5Qrcode("reader");
             scanner.start(
@@ -221,6 +270,14 @@
             }).catch(e => {
                 updateStatus("⚠️ Sync failed.", "#f8d7da", "#721c24", true);
             });
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            let R = 6371; // Earth radius in KM
+            let dLat = (lat2 - lat1) * Math.PI / 180;
+            let dLon = (lon2 - lon1) * Math.PI / 180;
+            let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
 
         function speakTamil(textToSpeak) {
