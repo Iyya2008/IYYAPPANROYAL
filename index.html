@@ -7,21 +7,24 @@
     <!-- Live Mobile QR Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 20px; background: #f4f6f9; color: #333; }
-        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 6px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 20px auto; }
+        body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 15px; background: #f4f6f9; color: #333; }
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 6px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 10px auto; }
         
-        /* Logos Header Styling */
-        .brand-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-        .brand-box { display: flex; flex-direction: column; align-items: center; width: 30%; }
-        .brand-logo { width: 45px; height: auto; object-fit: contain; }
-        .brand-title { font-size: 11px; font-weight: bold; color: #555; margin-top: 4px; text-transform: uppercase; }
-        .main-title { width: 40%; }
-        .main-title h2 { color: #0056b3; font-size: 16px; margin: 0; text-transform: uppercase; font-weight: 800; line-height: 1.2; }
+        /* Header Logo Section */
+        .shop-header { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .mechanic-logo { width: 45px; height: 45px; }
+        .shop-header h2 { color: #0056b3; font-size: 18px; margin: 0; text-transform: uppercase; font-weight: 800; }
 
-        input { width: 85%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; }
-        .btn { background: #28a745; color: white; padding: 14px 28px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; display: inline-block; width: 90%; margin-top: 15px; }
-        #status { margin: 15px auto; font-weight: bold; padding: 15px; border-radius: 10px; font-size: 15px; display: none; }
-        #reader { width: 100%; max-width: 320px; margin: 20px auto; border-radius: 8px; overflow: hidden; display: none; }
+        input { width: 85%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; }
+        .btn { background: #28a745; color: white; padding: 14px 28px; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; width: 90%; margin-top: 10px; }
+        .btn-blue { background: #007bff; }
+        
+        #status { margin: 15px auto; font-weight: bold; padding: 12px; border-radius: 10px; font-size: 14px; display: none; }
+        #reader { width: 100%; max-width: 320px; margin: 15px auto; border-radius: 8px; overflow: hidden; display: none; }
+
+        /* Login Verified Badge */
+        .login-verified-badge { display: none; background: #e7f1ff; color: #0c5460; padding: 8px; border-radius: 20px; font-size: 13px; font-weight: bold; margin-bottom: 15px; }
+        .blue-tick { color: #0d6efd; font-size: 16px; margin-left: 5px; }
 
         /* GPay Style Green Tick Animation */
         .success-checkmark { display: none; margin: 10px auto 20px auto; width: 80px; height: 80px; }
@@ -48,28 +51,31 @@
 <body>
 
     <div class="card">
-        <!-- Bajaj, Dhanlaxmi Motors, TVS Brands Header -->
-        <div class="brand-header">
-            <!-- Bajaj Logo & Name -->
-            <div class="brand-box">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Bajaj_Auto_Logo.svg/512px-Bajaj_Auto_Logo.svg.png" class="brand-logo" alt="Bajaj">
-                <span class="brand-title">BAJAJ</span>
-            </div>
+        <!-- Mechanic Logo & Shop Name -->
+        <div class="shop-header">
+            <img src="https://cdn-icons-png.flaticon.com/512/1995/1995429.png" class="mechanic-logo" alt="Mechanic Logo">
+            <h2>DHANLAXMI MOTORS</h2>
+        </div>
 
-            <!-- Main Shop Name -->
-            <div class="main-title">
-                <h2>DHANLAXMI MOTORS</h2>
-            </div>
-
-            <!-- TVS Logo & Name -->
-            <div class="brand-box">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/TVS_Motor_Company_logo.svg/512px-TVS_Motor_Company_logo.svg.png" class="brand-logo" alt="TVS">
-                <span class="brand-title">TVS</span>
-            </div>
+        <!-- Permanent Login Verified Badge (Blue Tick) -->
+        <div id="verifiedBadge" class="login-verified-badge">
+            📱 Device Registered <span class="blue-tick">✔</span>
         </div>
 
         <p style="font-size: 13px; color: #666; margin-top: 0;">Mobile Attendance System</p>
-        
+
+        <!-- 1. FIRST TIME OTP LOGIN SECTION -->
+        <div id="otpSection">
+            <h3 style="font-size: 15px; color: #333;">One Time Registration</h3>
+            <input type="tel" id="regMobile" placeholder="Enter Mobile Number" maxlength="10"><br>
+            <button id="sendOtpBtn" class="btn btn-blue" onclick="sendOTP()">Send OTP</button>
+            
+            <div id="otpInputDiv" style="display:none; margin-top:10px;">
+                <input type="number" id="otpCode" placeholder="Enter 4-Digit OTP (1234)"><br>
+                <button class="btn btn-blue" onclick="verifyOTP()">Verify & Save Device</button>
+            </div>
+        </div>
+
         <!-- GPay Style Tick Animation -->
         <div class="success-checkmark" id="checkmark">
             <svg class="check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
@@ -80,50 +86,89 @@
 
         <div id="status"></div>
         
-        <!-- Input Form Fields -->
-        <div id="form-fields">
+        <!-- 2. ATTENDANCE FORM SECTION -->
+        <div id="attendanceSection" style="display: none;">
             <input type="text" id="staffName" placeholder="Staff Name" required><br>
             <input type="tel" id="mobileNo" placeholder="Mobile Number" required><br>
+            <button id="scanBtn" class="btn" onclick="startQRScanner()">Scan Office QR Code</button>
         </div>
 
-        <!-- Attendance Trigger Button -->
-        <button id="scanBtn" class="btn" onclick="startQRScanner()">Scan Office QR Code</button>
         <div id="reader"></div>
     </div>
 
     <script>
-        // ==================== CONFIGURATION ====================
         const APP_URL = "https://script.google.com/macros/s/AKfycbzoAFfX0CaQqGGVXmv-hd4VDZR3lZ9rRautX_sr9pJ0WByYk1F-RmvFJCfo1oaQ05qs3A/exec"; 
-        const COOLDOWN_HOURS = 10; // 10 மணி நேர லாக்
-        // =======================================================
+        const COOLDOWN_HOURS = 10;
+        let generatedOTP = null;
+
+        // Check if Already Logged in Permanently
+        window.onload = function() {
+            let savedMobile = localStorage.getItem("registered_mobile");
+            if (savedMobile) {
+                document.getElementById("otpSection").style.display = "none";
+                document.getElementById("attendanceSection").style.display = "block";
+                document.getElementById("verifiedBadge").style.display = "block";
+            }
+        };
+
+        // Simulated OTP Sending
+        function sendOTP() {
+            let mobile = document.getElementById("regMobile").value.trim();
+            if(mobile.length !== 10) { alert("சரியான 10 இலக்க மொபைல் எண்ணை உள்ளிடவும்!"); return; }
+            
+            generatedOTP = "1234"; // Demo OTP
+            alert("OTP அனுப்பப்பட்டது! (Demo OTP: 1234)");
+            document.getElementById("otpInputDiv").style.display = "block";
+            document.getElementById("sendOtpBtn").style.display = "none";
+        }
+
+        // Permanent Device Registration
+        function verifyOTP() {
+            let enteredOTP = document.getElementById("otpCode").value.trim();
+            let mobile = document.getElementById("regMobile").value.trim();
+
+            if (enteredOTP === generatedOTP) {
+                localStorage.setItem("registered_mobile", mobile); // Permanent Lock
+                alert("Login வெற்றிகரமாக முடிந்தது! இந்த சாதனத்தில் பதிவு செய்யப்பட்டது.");
+                location.reload();
+            } else {
+                alert("தவறான OTP! மீண்டும் முயற்சிக்கவும்.");
+            }
+        }
 
         function startQRScanner() {
             let name = document.getElementById("staffName").value.trim();
             let mobile = document.getElementById("mobileNo").value.trim();
+            let registeredMobile = localStorage.getItem("registered_mobile");
             
             if(!name || !mobile) { 
                 alert("தயவுசெய்து பெயர் மற்றும் மொபைல் எண்ணை உள்ளிடவும்!"); 
                 return; 
             }
 
-            // ================= 10 HOURS LOCK CHECK =================
+            // ===== CHECK: REGISTRATION MOBILE vs TYPED MOBILE =====
+            if (mobile !== registeredMobile) {
+                let errorMsg = `${name}, நீங்கள் தவறான மொபைல் எண்ணை உள்ளிட்டுள்ளீர்கள்!`;
+                speakTamil(errorMsg);
+                updateStatus(`⚠️ ${name}, நீங்கள் தவறான மொபைல் எண்ணை உள்ளிட்டுள்ளீர்கள்!`, "#f8d7da", "#721c24", true);
+                return; // Stop Scanning
+            }
+
+            // ===== 10 HOURS LOCK CHECK =====
             let lastScanTime = localStorage.getItem("last_scan_" + mobile);
             let currentTime = new Date().getTime();
 
             if (lastScanTime) {
                 let hoursPassed = (currentTime - parseInt(lastScanTime)) / (1000 * 60 * 60);
-                
                 if (hoursPassed < COOLDOWN_HOURS) {
                     let alertMsg = `${name}, நீங்கள் ஏற்கனவே வருகைப் பதிவேட்டில் பதிவு செய்துவிட்டீர்கள்!`;
                     speakTamil(alertMsg);
-                    updateStatus(`⚠️ ${name}, நீங்கள் ஏற்கனவே வருகைப் பதிவு செய்துவிட்டீர்கள்! (10 மணி நேரத்திற்கு பின் மீண்டும் பதிவு செய்யலாம்)`, "#f8d7da", "#721c24", true);
+                    updateStatus(`⚠️ ${name}, நீங்கள் ஏற்கனவே வருகைப் பதிவு செய்துவிட்டீர்கள்!`, "#f8d7da", "#721c24", true);
                     return;
                 }
             }
-            // =======================================================
 
-            document.getElementById("form-fields").style.display = "none";
-            document.getElementById("scanBtn").style.display = "none";
+            document.getElementById("attendanceSection").style.display = "none";
             document.getElementById("reader").style.display = "block";
 
             const scanner = new Html5Qrcode("reader");
@@ -134,15 +179,12 @@
                     scanner.stop().then(() => {
                         document.getElementById("reader").style.display = "none";
                         pushToGoogleSheet(name, mobile, text);
-                    }).catch(err => {
-                        console.log("Failed to stop scanner.");
                     });
                 },
-                (errorMessage) => { /* Scanning... */ }
+                (err) => {}
             ).catch(err => { 
-                alert("கமரா அனுமதி (Camera Permission) தேவை!"); 
-                document.getElementById("form-fields").style.display = "block";
-                document.getElementById("scanBtn").style.display = "inline-block";
+                alert("கமரா அனுமதி தேவை!"); 
+                document.getElementById("attendanceSection").style.display = "block";
                 document.getElementById("reader").style.display = "none";
             });
         }
@@ -166,7 +208,6 @@
                 body: JSON.stringify(payload)
             }).then(() => {
                 localStorage.setItem("last_scan_" + mobile, new Date().getTime());
-
                 document.getElementById("checkmark").style.display = "block";
 
                 let textMessage = `${name}, உங்கள் வருகை, வருகை பதிவேட்டில் பதிவு செய்யப்பட்டது. நன்றி!`;
@@ -177,16 +218,14 @@
                 setTimeout(() => {
                     location.reload();
                 }, 5000);
-
             }).catch(e => {
-                updateStatus("⚠️ Sync failed. Check network connection.", "#f8d7da", "#721c24", true);
+                updateStatus("⚠️ Sync failed.", "#f8d7da", "#721c24", true);
             });
         }
 
         function speakTamil(textToSpeak) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-
                 let speech = new SpeechSynthesisUtterance();
                 speech.text = textToSpeak;
                 speech.lang = 'ta-IN';
@@ -196,25 +235,18 @@
                 let voices = window.speechSynthesis.getVoices();
                 let femaleVoice = voices.find(v => v.lang.includes('ta') && (v.name.includes('Google') || v.name.includes('Female') || v.name.includes('Natural'))) || voices.find(v => v.lang.includes('ta'));
 
-                if (femaleVoice) {
-                    speech.voice = femaleVoice;
-                }
-
+                if (femaleVoice) speech.voice = femaleVoice;
                 window.speechSynthesis.speak(speech);
             }
         }
 
         if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = () => {
-                window.speechSynthesis.getVoices();
-            };
+            window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
         }
 
         function updateStatus(txt, bg, color, show) {
             let s = document.getElementById("status");
-            s.innerHTML = txt; 
-            s.style.background = bg; 
-            s.style.color = color;
+            s.innerHTML = txt; s.style.background = bg; s.style.color = color;
             s.style.display = show ? "block" : "none";
         }
     </script>
